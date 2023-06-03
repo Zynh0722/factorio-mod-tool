@@ -2,8 +2,8 @@
 name = "factorio-mod-tool"
 version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+authors = ["Zynh Ludwig <Zynh0722@gmail.com>"]
+description = "A simple tool for collecting and switching currently enabled mods in Factorio"
 
 [dependencies]
 clap = { version = "4.3.0", features = ["derive"] }
