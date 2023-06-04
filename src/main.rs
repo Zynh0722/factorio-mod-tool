@@ -34,5 +34,5 @@ fn get_default_mods_folder() -> Option<PathBuf> {
     #[cfg(target_os = "windows")]
     let factorio_path = config_path.join("Factorio");
 
-    return Some(factorio_path.join("mods"));
+    Some(factorio_path.join("mods"))
 }
