@@ -1,6 +1,6 @@
 [package]
 name = "factorio-mod-tool"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["Zynh Ludwig <Zynh0722@gmail.com>"]
 description = "A simple tool for collecting and switching currently enabled mods in Factorio"
