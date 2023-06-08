@@ -4,7 +4,22 @@ mod default_folder;
 
 use default_folder::get_default_mods_folder;
 
-use std::path::PathBuf;
+use std::{fs, path::PathBuf};
+
+#[derive(Debug)]
+struct ModFile {
+    pub file_name: String,
+    pub path: PathBuf,
+}
+
+impl ModFile {
+    fn new(p: PathBuf) -> Self {
+        Self {
+            path: p.clone(),
+            file_name: p.file_name().unwrap().to_str().unwrap().to_string(),
+        }
+    }
+}
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -22,5 +37,11 @@ fn main() {
         .or_else(get_default_mods_folder)
         .expect("Please include a file path. --help for more information");
 
-    println!("{mods_folder:?}");
+    let mods_folder = fs::read_dir(mods_folder).unwrap().flatten();
+
+    let mods = mods_folder.map(|p| ModFile::new(p.path()));
+
+    for module in mods {
+        println!("{:?}\n\t{:?}\n", module.file_name, module.path);
+    }
 }
