@@ -8,3 +8,5 @@ description = "A simple tool for collecting and switching currently enabled mods
 [dependencies]
 clap = { version = "4.3.0", features = ["derive"] }
 dirs = "5.0.1"
+enum-as-inner = "0.6.0"
+semver = "1.0.17"

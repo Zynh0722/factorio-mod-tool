@@ -3,8 +3,10 @@ use clap::Parser;
 mod default_folder;
 
 use default_folder::get_default_mods_folder;
+use enum_as_inner::EnumAsInner;
+use semver::Version;
 
-use std::{fs, path::PathBuf};
+use std::{fs, iter::Cloned, path::PathBuf};
 
 #[derive(Debug, Clone)]
 struct ModFile {
@@ -13,28 +15,54 @@ struct ModFile {
     pub data: ModFileData,
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, EnumAsInner)]
 enum ModFileData {
     ModList,
     ModSettings,
-    Mod(String),
+    Mod(ModData),
     #[allow(dead_code)]
     Uknown,
+}
+
+#[derive(PartialEq, Debug, Clone)]
+struct ModData {
+    name: String,
+    version: Version,
 }
 
 impl ModFile {
     fn new(p: &PathBuf) -> Self {
         let file_name = p.file_name().unwrap().to_str().unwrap().to_string();
-        let split_name_version = file_name.clone();
-        let mut split_name_version = split_name_version.split("_");
-        let name = split_name_version.next().unwrap();
+        let split_name_version = file_name.rsplit("_");
 
-        let data = match name {
+        let name = if split_name_version.clone().count() > 2 {
+            let mut name: Vec<String> = split_name_version
+                .clone()
+                .map(|s| s.to_owned())
+                .skip(1)
+                .collect();
+
+            name.reverse();
+
+            name.join("_")
+        } else {
+            split_name_version.clone().last().unwrap().to_owned()
+        };
+
+        let data = match name.as_str() {
             "mod-list.json" => ModFileData::ModList,
             "mod-settings.dat" => ModFileData::ModSettings,
-            name => {
-                if let Some(mod_name) = name.split("_").next() {
-                    ModFileData::Mod(mod_name.to_owned())
+            _ => {
+                let version = split_name_version
+                    .clone()
+                    .next()
+                    .unwrap()
+                    .replace(".zip", "");
+
+                let version = Version::parse(&version).ok();
+
+                if let Some(version) = version {
+                    ModFileData::Mod(ModData { name, version })
                 } else {
                     ModFileData::Uknown
                 }
@@ -75,16 +103,14 @@ fn main() {
         .cloned()
         .collect();
 
-    let _mod_list = mods_folder_contents
+    let mod_list = mods_folder_contents
         .iter()
         .find(|f| f.data == ModFileData::ModList)
-        .unwrap()
         .clone();
 
-    let _mod_settings = mods_folder_contents
+    let mod_settings = mods_folder_contents
         .iter()
         .find(|f| f.data == ModFileData::ModSettings)
-        .unwrap()
         .clone();
 
     let unknown_files: Vec<ModFile> = mods_folder_contents
@@ -93,12 +119,15 @@ fn main() {
         .cloned()
         .collect();
 
+    mods.iter()
+        .for_each(|f| println!("{:#?}", f.data.as_mod().unwrap()));
+
     println!("# Mods: {}", mods.iter().count());
     println!(
-        "# Files - Mods = {} # should be two",
+        "# Files - Mods = {} # should prolly be two",
         mods_folder_contents.iter().count() - mods.iter().count()
     );
-    println!("# ModList: Detected");
-    println!("# ModSettings: Detected");
+    println!("# ModList: {}", mod_list.is_some());
+    println!("# ModSettings: {}", mod_settings.is_some());
     println!("# Uknowns: {}", unknown_files.iter().count());
 }
