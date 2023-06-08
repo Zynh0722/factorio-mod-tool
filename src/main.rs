@@ -13,7 +13,10 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    let mods_folder = args.path.or_else(get_default_mods_folder);
+    let mods_folder = args
+        .path
+        .or_else(get_default_mods_folder)
+        .expect("Please include a file path. --help for more information");
 
     println!("{mods_folder:?}");
 }
