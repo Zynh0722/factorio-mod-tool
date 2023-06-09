@@ -5,14 +5,39 @@ mod default_folder;
 use default_folder::get_default_mods_folder;
 use enum_as_inner::EnumAsInner;
 use semver::Version;
+use serde::{Deserialize, Serialize};
 
-use std::{fs, iter::Cloned, path::PathBuf};
+use std::{collections::HashMap, fs, path::PathBuf};
 
 #[derive(Debug, Clone)]
 struct ModFile {
+    #[allow(dead_code)]
     pub file_name: String,
     pub path: PathBuf,
     pub data: ModFileData,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct ModListEntry {
+    name: String,
+    enabled: bool,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct ModList {
+    mods: Vec<ModListEntry>,
+}
+
+impl Into<HashMap<String, bool>> for ModList {
+    fn into(self) -> HashMap<String, bool> {
+        let mut map = HashMap::new();
+
+        for entry in self.mods {
+            map.insert(entry.name, entry.enabled);
+        }
+
+        map
+    }
 }
 
 #[derive(Debug, PartialEq, Clone, EnumAsInner)]
@@ -20,7 +45,6 @@ enum ModFileData {
     ModList,
     ModSettings,
     Mod(ModData),
-    #[allow(dead_code)]
     Uknown,
 }
 
@@ -28,6 +52,7 @@ enum ModFileData {
 struct ModData {
     name: String,
     version: Version,
+    enabled: bool,
 }
 
 impl ModFile {
@@ -62,7 +87,11 @@ impl ModFile {
                 let version = Version::parse(&version).ok();
 
                 if let Some(version) = version {
-                    ModFileData::Mod(ModData { name, version })
+                    ModFileData::Mod(ModData {
+                        name,
+                        enabled: false,
+                        version,
+                    })
                 } else {
                     ModFileData::Uknown
                 }
@@ -88,6 +117,10 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
+    parse_and_print_mods_folder(args);
+}
+
+fn parse_and_print_mods_folder(args: Args) {
     let mods_folder = args
         .path
         .or_else(get_default_mods_folder)
@@ -108,6 +141,13 @@ fn main() {
         .find(|f| f.data == ModFileData::ModList)
         .clone();
 
+    let mut parsed_mod_list: HashMap<String, bool> =
+        serde_json::from_slice::<ModList>(&fs::read(mod_list.unwrap().path.clone()).unwrap())
+            .unwrap()
+            .into();
+
+    parsed_mod_list.remove_entry("base");
+
     let mod_settings = mods_folder_contents
         .iter()
         .find(|f| f.data == ModFileData::ModSettings)
@@ -119,8 +159,24 @@ fn main() {
         .cloned()
         .collect();
 
-    mods.iter()
-        .for_each(|f| println!("{:#?}", f.data.as_mod().unwrap()));
+    let mod_list_map: HashMap<String, Vec<ModFile>> =
+        mods.clone()
+            .into_iter()
+            .fold(HashMap::new(), |mut acc, mod_file| {
+                acc.entry(mod_file.data.as_mod().unwrap().name.clone())
+                    .or_default()
+                    .push(mod_file);
+                acc
+            });
+
+    for (mod_name, enabled) in parsed_mod_list.iter() {
+        println!(
+            " - [{}] {:40}- {} version(s)",
+            if *enabled { "X" } else { " " },
+            mod_name,
+            mod_list_map.get(mod_name).iter().count()
+        );
+    }
 
     println!("# Mods: {}", mods.iter().count());
     println!(
