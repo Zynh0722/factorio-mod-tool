@@ -170,7 +170,14 @@ fn parse_and_print_mods_folder(args: Args) {
             });
 
     for mods in mod_list_map.values_mut() {
-        mods.sort_unstable();
+        mods.sort_unstable_by(|a, b| {
+            a.data
+                .as_mod()
+                .unwrap()
+                .version
+                .partial_cmp(&b.data.as_mod().unwrap().version)
+                .unwrap()
+        });
     }
 
     let mut sorted_mods: Vec<(&String, &bool)> = parsed_mod_list.iter().collect();
