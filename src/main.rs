@@ -169,12 +169,21 @@ fn parse_and_print_mods_folder(args: Args) {
                 acc
             });
 
-    for (mod_name, enabled) in parsed_mod_list.iter() {
+    let mut sorted_mods: Vec<(&String, &bool)> = parsed_mod_list.iter().collect();
+    sorted_mods.sort_unstable_by(|a, b| b.1.partial_cmp(a.1).unwrap());
+
+    for (mod_name, enabled) in sorted_mods.iter() {
         println!(
-            " - [{}] {:40}- {} version(s)",
-            if *enabled { "X" } else { " " },
+            " - [{}] {:40}- latest: {:8} - {} version(s)",
+            if **enabled { "X" } else { " " },
             mod_name,
-            mod_list_map.get(mod_name).iter().count()
+            // This is only latest because I only have one version
+            mod_list_map.get(*mod_name).unwrap()[0]
+                .data
+                .as_mod()
+                .unwrap()
+                .version,
+            mod_list_map.get(*mod_name).iter().count(),
         );
     }
 
