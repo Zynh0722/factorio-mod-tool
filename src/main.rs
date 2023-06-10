@@ -183,7 +183,7 @@ fn parse_and_print_mods_folder(args: Args) {
                 .as_mod()
                 .unwrap()
                 .version,
-            mod_list_map.get(*mod_name).iter().count(),
+            mod_list_map.get(*mod_name).unwrap().iter().count(),
         );
     }
 
