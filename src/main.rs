@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 
 use std::{collections::HashMap, fs, path::PathBuf};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq, PartialOrd, Ord)]
 struct ModFile {
     #[allow(dead_code)]
     pub file_name: String,
@@ -40,7 +40,7 @@ impl Into<HashMap<String, bool>> for ModList {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, EnumAsInner)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, EnumAsInner)]
 enum ModFileData {
     ModList,
     ModSettings,
@@ -48,7 +48,7 @@ enum ModFileData {
     Uknown,
 }
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Debug, Clone)]
 struct ModData {
     name: String,
     version: Version,
@@ -159,7 +159,7 @@ fn parse_and_print_mods_folder(args: Args) {
         .cloned()
         .collect();
 
-    let mod_list_map: HashMap<String, Vec<ModFile>> =
+    let mut mod_list_map: HashMap<String, Vec<ModFile>> =
         mods.clone()
             .into_iter()
             .fold(HashMap::new(), |mut acc, mod_file| {
@@ -169,12 +169,16 @@ fn parse_and_print_mods_folder(args: Args) {
                 acc
             });
 
+    for mods in mod_list_map.values_mut() {
+        mods.sort_unstable();
+    }
+
     let mut sorted_mods: Vec<(&String, &bool)> = parsed_mod_list.iter().collect();
     sorted_mods.sort_unstable_by(|a, b| b.1.partial_cmp(a.1).unwrap());
 
     for (mod_name, enabled) in sorted_mods.iter() {
         println!(
-            " - [{}] {:40}- latest: {:8} - {} version(s)",
+            " - [{}] {:40}latest {:8} - {} version(s)",
             if **enabled { "X" } else { " " },
             mod_name,
             // This is only latest because I only have one version
