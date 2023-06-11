@@ -19,8 +19,8 @@ fn main() {
 
     let mods_folder_path = mods_folder.as_ref().unwrap();
 
-    println!("{mods_folder:?}");
-    println!("exists? {:?}", mods_folder_path.exists());
+    // TODO: handle this gracefully
+    assert!(mods_folder_path.exists());
 
     let mods_folder = fs::read_dir(mods_folder_path).unwrap();
     let mods_folder: Vec<DirEntry> = mods_folder.map(|dir| dir.unwrap()).collect();
