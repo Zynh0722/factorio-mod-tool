@@ -9,12 +9,22 @@ use serde::{Deserialize, Serialize};
 
 use std::{collections::HashMap, fs, path::PathBuf};
 
+// TODO: I need to cull these traits eventually
 #[derive(Debug, Clone, Eq, PartialEq, PartialOrd, Ord)]
 struct ModFile {
-    #[allow(dead_code)]
     pub file_name: String,
     pub path: PathBuf,
     pub data: ModFileData,
+}
+
+impl ModFile {
+    fn get_version(&self) -> Option<&Version> {
+        Some(&self.data.as_mod()?.version)
+    }
+
+    fn get_mod_name(&self) -> Option<&String> {
+        Some(&self.data.as_mod()?.name)
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -40,6 +50,26 @@ impl Into<HashMap<String, bool>> for ModList {
     }
 }
 
+trait Returns<T> {
+    fn returns(&self, t: T) -> T {
+        t
+    }
+}
+
+impl<T> Returns<T> for () {}
+
+trait Reversed {
+    fn reversed(self) -> Self;
+}
+
+impl<T> Reversed for Vec<T> {
+    #[inline]
+    fn reversed(mut self) -> Self {
+        self.reverse();
+        self
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, EnumAsInner)]
 enum ModFileData {
     ModList,
@@ -61,15 +91,13 @@ impl ModFile {
         let split_name_version = file_name.rsplit("_");
 
         let name = if split_name_version.clone().count() > 2 {
-            let mut name: Vec<String> = split_name_version
+            split_name_version
                 .clone()
                 .map(|s| s.to_owned())
                 .skip(1)
-                .collect();
-
-            name.reverse();
-
-            name.join("_")
+                .collect::<Vec<String>>()
+                .reversed()
+                .join("_")
         } else {
             split_name_version.clone().last().unwrap().to_owned()
         };
@@ -132,26 +160,26 @@ fn parse_and_print_mods_folder(args: Args) {
 
     let mods: Vec<ModFile> = mods_folder_contents
         .iter()
-        .filter(|file| matches!(file.data, ModFileData::Mod(_)))
+        .filter(|file| file.data.is_mod())
         .cloned()
         .collect();
 
-    let mod_list = mods_folder_contents
+    let mod_list_file = mods_folder_contents
         .iter()
-        .find(|f| f.data == ModFileData::ModList)
-        .clone();
+        .find(|f| f.data.is_mod_list())
+        .cloned();
 
-    let mut parsed_mod_list: HashMap<String, bool> =
-        serde_json::from_slice::<ModList>(&fs::read(mod_list.unwrap().path.clone()).unwrap())
-            .unwrap()
-            .into();
+    let mod_list: ModList =
+        serde_json::from_slice(&fs::read(mod_list_file.as_ref().unwrap().path.clone()).unwrap())
+            .unwrap();
+    let mut parsed_mod_list: HashMap<String, bool> = mod_list.into();
 
     parsed_mod_list.remove_entry("base");
 
     let mod_settings = mods_folder_contents
         .iter()
-        .find(|f| f.data == ModFileData::ModSettings)
-        .clone();
+        .find(|f| f.data.is_mod_settings())
+        .cloned();
 
     let unknown_files: Vec<ModFile> = mods_folder_contents
         .iter()
@@ -163,20 +191,19 @@ fn parse_and_print_mods_folder(args: Args) {
         mods.clone()
             .into_iter()
             .fold(HashMap::new(), |mut acc, mod_file| {
-                acc.entry(mod_file.data.as_mod().unwrap().name.clone())
+                acc.entry(mod_file.get_mod_name().unwrap().clone())
                     .or_default()
-                    .push(mod_file);
-                acc
+                    .push(mod_file)
+                    .returns(acc)
             });
 
+    // Sort mods by version
     for mods in mod_list_map.values_mut() {
         mods.sort_unstable_by(|a, b| {
-            a.data
-                .as_mod()
-                .unwrap()
-                .version
-                .partial_cmp(&b.data.as_mod().unwrap().version)
-                .unwrap()
+            let a_v = a.get_version().unwrap();
+            let b_v = b.get_version().unwrap();
+
+            a_v.cmp(b_v)
         });
     }
 
@@ -203,7 +230,7 @@ fn parse_and_print_mods_folder(args: Args) {
         "# Files - Mods = {} # should prolly be two",
         mods_folder_contents.iter().count() - mods.iter().count()
     );
-    println!("# ModList: {}", mod_list.is_some());
+    println!("# ModList: {}", mod_list_file.is_some());
     println!("# ModSettings: {}", mod_settings.is_some());
     println!("# Uknowns: {}", unknown_files.iter().count());
 }
