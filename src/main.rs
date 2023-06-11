@@ -1,8 +1,5 @@
 use clap::Parser;
-use std::{
-    fs::{self, DirEntry},
-    io,
-};
+use std::fs::{self, DirEntry};
 
 mod args;
 mod init;
