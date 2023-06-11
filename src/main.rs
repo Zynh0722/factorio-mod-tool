@@ -18,8 +18,6 @@ fn main() {
 
     let mods_folder = mods_folder.unwrap();
 
-    let mods_folder_exists = mods_folder.exists();
-
     println!("{mods_folder:?}");
-    println!("exists? {mods_folder_exists:?}");
+    println!("exists? {:?}", mods_folder.exists());
 }
