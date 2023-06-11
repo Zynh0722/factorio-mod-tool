@@ -6,6 +6,7 @@ mod args;
 use init::get_default_mods_folder;
 use args::Args;
 
+// this is a comment
 
 fn main() {
     let args = Args::parse();
