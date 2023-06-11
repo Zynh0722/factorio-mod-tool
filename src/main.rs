@@ -1,12 +1,10 @@
 use clap::Parser;
 
-mod init;
 mod args;
+mod init;
 
-use init::get_default_mods_folder;
 use args::Args;
-
-// this is a comment
+use init::get_default_mods_folder;
 
 fn main() {
     let args = Args::parse();
