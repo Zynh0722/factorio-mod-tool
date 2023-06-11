@@ -1,4 +1,5 @@
 use clap::Parser;
+use std::fs;
 
 mod args;
 mod init;
@@ -20,4 +21,8 @@ fn main() {
 
     println!("{mods_folder:?}");
     println!("exists? {:?}", mods_folder.exists());
+
+    for file in fs::read_dir(mods_folder).unwrap() {
+        println!("{}", file.unwrap().path().display());
+    }
 }
