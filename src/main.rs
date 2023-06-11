@@ -1,5 +1,8 @@
 use clap::Parser;
-use std::fs;
+use std::{
+    fs::{self, DirEntry},
+    io,
+};
 
 mod args;
 mod init;
@@ -22,7 +25,21 @@ fn main() {
     println!("{mods_folder:?}");
     println!("exists? {:?}", mods_folder.exists());
 
-    for file in fs::read_dir(mods_folder).unwrap() {
-        println!("{}", file.unwrap().path().display());
+    let mods_folder = fs::read_dir(mods_folder).unwrap();
+    let mods_folder: Vec<DirEntry> = mods_folder.map(|dir| dir.unwrap()).collect();
+
+    for mod_f in mods_folder.iter() {
+        println!("{:#?}", mod_f.file_name());
     }
+}
+
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+struct ModList {
+    mods: Vec<ModListEntry>,
+}
+
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+struct ModListEntry {
+    name: String,
+    enabled: bool,
 }
