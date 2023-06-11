@@ -25,10 +25,8 @@ fn main() {
     let mods_folder = fs::read_dir(mods_folder_path).unwrap();
     let mods_folder: Vec<DirEntry> = mods_folder.map(|dir| dir.unwrap()).collect();
 
-    println!("{:?}", mods_folder_path.join("mod-list.json"));
-    // println!("{mods_folder:?}");
     let contents = fs::read_to_string(mods_folder_path.join("mod-list.json"))
-    .expect("Should have been able to read the file");
+        .expect("Should have been able to read the file");
 
     // println!("With text:\n{contents}");
     let mod_list: ModList = serde_json::from_str(&contents).expect(r"This didn't work ¯\_(ツ)_/¯");
