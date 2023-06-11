@@ -1,18 +1,11 @@
 use clap::Parser;
 
-use std::path::PathBuf;
-
 mod init;
+mod args;
 
 use init::get_default_mods_folder;
+use args::Args;
 
-#[derive(Parser)]
-#[command(author, version, about, long_about = None)]
-struct Args {
-    #[arg(short = 'f', long = "file")]
-    /// File path of factorio mods folder
-    path: Option<PathBuf>,
-}
 
 fn main() {
     let args = Args::parse();

@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 pub fn get_default_mods_folder() -> Option<PathBuf> {
     #[cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))]
     return None;
