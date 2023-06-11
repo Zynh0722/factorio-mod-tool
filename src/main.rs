@@ -17,17 +17,23 @@ fn main() {
         return;
     }
 
-    let mods_folder = mods_folder.unwrap();
+    let mods_folder_path = mods_folder.as_ref().unwrap();
 
     println!("{mods_folder:?}");
-    println!("exists? {:?}", mods_folder.exists());
+    println!("exists? {:?}", mods_folder_path.exists());
 
-    let mods_folder = fs::read_dir(mods_folder).unwrap();
+    let mods_folder = fs::read_dir(mods_folder_path).unwrap();
     let mods_folder: Vec<DirEntry> = mods_folder.map(|dir| dir.unwrap()).collect();
 
-    for mod_f in mods_folder.iter() {
-        println!("{:#?}", mod_f.file_name());
-    }
+    println!("{:?}", mods_folder_path.join("mod-list.json"));
+    // println!("{mods_folder:?}");
+    let contents = fs::read_to_string(mods_folder_path.join("mod-list.json"))
+    .expect("Should have been able to read the file");
+
+    // println!("With text:\n{contents}");
+    let mod_list: ModList = serde_json::from_str(&contents).expect(r"This didn't work ¯\_(ツ)_/¯");
+
+    println!("{:#?}", mod_list)
 }
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
