@@ -1,5 +1,6 @@
 use clap::Parser;
 use std::{
+    collections::HashMap,
     fs::{self, DirEntry},
     path::PathBuf,
 };
@@ -29,15 +30,47 @@ fn main() {
     let _mods_folder: Vec<DirEntry> = mods_folder.map(|dir| dir.unwrap()).collect();
 
     let mod_list_path = mods_folder_path.clone().join("mod-list.json");
-    let mod_list: ModList = try_parse_mod_list(&mod_list_path).unwrap();
+    let mod_list_map = try_parse_mod_list_map(&mod_list_path).unwrap();
 
-    println!("{:#?}", mod_list)
+    for (name, enabled) in mod_list_map.iter() {
+        println!("[{}] {name}", if *enabled { "X" } else { " " });
+    }
+}
+
+fn try_parse_mod_list_map(path: &PathBuf) -> std::io::Result<ModListMap> {
+    Ok(try_parse_mod_list(path)?.into())
 }
 
 fn try_parse_mod_list(path: &PathBuf) -> std::io::Result<ModList> {
     let contents = fs::read_to_string(path)?;
 
     Ok(serde_json::from_str(&contents)?)
+}
+
+type ModListMap = HashMap<String, bool>;
+
+impl Into<ModListMap> for ModList {
+    fn into(self) -> HashMap<String, bool> {
+        let mut new = HashMap::new();
+
+        for entry in self.mods {
+            new.insert(entry.name, entry.enabled);
+        }
+
+        new
+    }
+}
+
+impl Into<ModList> for ModListMap {
+    fn into(self) -> ModList {
+        let mut mods = Vec::new();
+
+        for (name, enabled) in self.into_iter() {
+            mods.push(ModListEntry { name, enabled })
+        }
+
+        ModList { mods }
+    }
 }
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
