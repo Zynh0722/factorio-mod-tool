@@ -23,17 +23,11 @@ fn get_default_mods_folder() -> Option<PathBuf> {
     return None;
 
     #[cfg(target_os = "linux")]
-    return Some(dirs::home_dir().unwrap().join(".factorio/mods"));
-
-    #[cfg(any(target_os = "macos", target_os = "windows"))]
-    let config_path = dirs::config_dir().unwrap();
+    return Some(dirs::home_dir().unwrap().join(".factorio").join("mods"));
 
     #[cfg(target_os = "macos")]
-    let factorio_path = config_path.join("factorio");
+    return Some(dirs::config_dir().unwrap().join("factorio").join("mods"));
 
     #[cfg(target_os = "windows")]
-    let factorio_path = config_path.join("Factorio");
-
-    #[cfg(any(target_os = "macos", target_os = "windows"))]
-    Some(factorio_path.join("mods"))
+    return Some(dirs::config_dir().unwrap().join("Factorio").join("mods"));
 }
