@@ -23,7 +23,10 @@ fn main() {
     let mods_folder_path = mods_folder.as_ref().unwrap();
 
     // TODO: handle this gracefully
-    assert!(mods_folder_path.exists(), "The mods folder path doesn't exist!");
+    assert!(
+        mods_folder_path.exists(),
+        "The mods folder path doesn't exist!"
+    );
 
     let mods_folder = fs::read_dir(mods_folder_path).unwrap();
     let _mods_folder: Vec<DirEntry> = mods_folder.map(|dir| dir.unwrap()).collect();
