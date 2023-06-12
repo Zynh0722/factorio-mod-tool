@@ -4,6 +4,7 @@ use std::fs::{self, DirEntry};
 mod args;
 mod init;
 mod mod_list;
+mod my_mod_list;
 
 use args::Args;
 use init::get_default_mods_folder;
